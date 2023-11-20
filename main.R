@@ -10,18 +10,18 @@ library(XML)
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
 web_page <-  httr::GET(url)
 xml_page <- htmlParse(web_page)
-xml_page
+print(xml_page)
 
 
 #Pregunta 1.3
 # Buscar todos los enlaces en la página
 enlaces <- xpathSApply(xml_page, "//a", xmlAttrs)
 
-# Crear un data frame para almacenar los resultados
-resultados <- data.frame(
-  Texto_del_Enlace = sapply(enlaces, function(x) xmlValue(x[[1]])),
-  URL_de_Destino = sapply(enlaces, function(x) x[['href']])
+# Obtener los valores de href y texto
+df <- data.frame(
+  HREF = xpathSApply(xml_page, "//a", xmlGetAttr, "href"),
+  TEXTO = xpathSApply(xml_page, "//a", xmlValue)
 )
 
-# Imprimir los resultados
-print(resultados)
+# Imprimir el dataframe
+print(df)
