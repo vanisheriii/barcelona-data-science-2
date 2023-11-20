@@ -9,6 +9,11 @@ library(XML)
 #Pregunta 1.1 agregando
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
 web_page <-  httr::GET(url)
+
+#feature1.3
+xml_page <- htmlParse(web_page)
+print(xml_page)
+
 xml_page <- htmlParse(web_page, asText=TRUE)
 
 
@@ -24,3 +29,18 @@ xml_a_desc <- xpathApply(xml_page,"//a//span")
 xml_a_desc
 ##Usar el R vest
 #busar el r markdown
+
+
+#Pregunta 1.3
+# Buscar todos los enlaces en la página
+enlaces <- xpathSApply(xml_page, "//a", xmlAttrs)
+
+# Obtener los valores de href y texto
+df <- data.frame(
+  HREF = xpathSApply(xml_page, "//a", xmlGetAttr, "href"),
+  TEXTO = xpathSApply(xml_page, "//a", xmlValue)
+)
+
+# Imprimir el dataframe
+print(df)
+
