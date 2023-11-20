@@ -6,9 +6,8 @@ install.packages("XML")
 
 library(XML)
 
-
+#Pregunta 1.1 agregando
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
 web_page <-  httr::GET(url)
 xml_page <- htmlParse(web_page)
-class(xml_page)
-class(web_page)
+xml_page
