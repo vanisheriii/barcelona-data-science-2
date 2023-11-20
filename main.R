@@ -1,10 +1,15 @@
 #Inicio ejercicio 2
 #Instalar el paquete httr para descargar paginas web
-install.packages("httr")
 #Instalar paquete XML
+install.packages("httr")
 install.packages("XML")
+install.packages("dplyr")
+install.packages("stringr")
 
 library(XML)
+library(dplyr)
+
+
 
 #Pregunta 1.1 agregando
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
@@ -41,6 +46,21 @@ df <- data.frame(
   TEXTO = xpathSApply(xml_page, "//a", xmlValue)
 )
 
+df$TEXTO = df$TEXTO <- ifelse(is.na(df$TEXTO),na,df$TEXTO)
+
+
+#FILTRO 
+filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",ignore_case = TRUE))
+ 
+ 
+ df2 <- df %>% group_by(HREF) %>% summarise(cantidad_peticiones  = n())
+ 
+ inner_merged <- merge(df, df2, by = "HREF")
+ inner_merged
+ 
 # Imprimir el dataframe
 print(df)
 
+install.packages("writexl")
+library(writexl)
+write_xlsx(df, "df_pregunta1_3..xlsx")
