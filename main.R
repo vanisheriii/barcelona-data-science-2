@@ -59,11 +59,8 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
 
 #1.4 ver la cantidad de URLS que han sido llamado mas de una vez y agruparlo con su texto
  
- df2 <- df %>% group_by(HREF) %>% summarise(cantidad_peticiones  = n())
+ df2 <- df %>% group_by(HREF,TEXTO) %>% summarise(cantidad_peticiones  = n())
  
- inner_merged <- merge(df, df2, by = "HREF")
- inner_merged
- print(df2)
  
 #1.5 de la lista anterior se tiene que iterar y obtener los valores del URL
  
@@ -75,11 +72,12 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
  header
  
  
- inner_merged <- cbind(inner_merged, responseCode=NA)
+ df2 <- cbind(df2, responseCode=NA)
+ df2 <- cbind(df2, url_type=NA)
  
- for(i in 1:nrow(inner_merged))
+ for(i in 1:nrow(df2))
  {
-   row <- inner_merged[i,]
+   row <- df2[i,]
    url_local <- row$HREF
    
    ## aca tenemos que poner la condicional para saber comovamos tratar las url
@@ -103,7 +101,7 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
      url_test <- httr::GET(url_local)
      print(url_local)
      print(url_test$status_code)
-     inner_merged[i,4] <- url_test$status_code
+     df2[i,4] <- url_test$status_code
      Sys.sleep(0.2)
    }
    
