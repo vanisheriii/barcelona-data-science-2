@@ -58,8 +58,35 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
  inner_merged <- merge(df, df2, by = "HREF")
  inner_merged
  
-# Imprimir el dataframe
+ url_test <- httr::GET(url)
+ url_test$status_code
+ 
+ ##Para ver el header
+ header <- httr::headers(url_test)
+ header
+ 
+ 
+ for(i in 1:nrow(df))
+ {
+   row <- df[i,]
+   #print(row$HREF)
+   url <- row$HREF
+   
+   ## aca tenemos que poner la condicional para saber comovamos tratar las url
+   
+   if(url == "https://www.mediawiki.org/wiki/Template:Main_page/bs")
+     print("found")
+   
+   
+ }
+ 
+ 
+ 
+
+ header
+ # Imprimir el dataframe
 print(df)
+
 
 install.packages("writexl")
 library(writexl)
