@@ -7,12 +7,18 @@ install.packages("XML")
 install.packages("dplyr")
 install.packages("stringr")
 install.packages("writexl")
-
-
+install.packages("lessR")
+install.packages("tidyverse")
 #Usando las librerias
+
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(scales)
 library(XML)
 library(dplyr)
 library(writexl)
+library(lessR)
 
 
 #Pregunta 1.1 agregando Descargar la pagina web y parsear a formato xml
@@ -120,14 +126,11 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
  # ...
 
 #Pregunta 2.1
- install.packages("tidyverse")
- library(ggplot2)
- library(readr)
- library(dplyr)
- library(scales)
+
  
  
-   df3 <- df2 %>%
+  
+  df3 <- df2 %>%
      mutate(DOMINIO = gsub("^(https?://[^/]+).*", "\\1", HREF))
    
    df3 <- df3 %>% arrange(desc(cantidad_peticiones))
@@ -141,15 +144,6 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotar etiquetas en el eje x
      facet_wrap(~url_type, scales = "free_y")  # Facetas por url_type con escalas libres en el eje y
    
-   
-   ggplot(data = df3, aes(x = reorder(DOMINIO, -..count..), fill = factor(url_type))) +
-     geom_bar(color = "black", position = "stack", alpha = 0.7) +
-     scale_fill_manual(values = c("yellow", "green")) +
-     geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, position = position_stack(vjust = 0.5)) +
-     labs(title = "Frecuencia de Dominios", x = "Dominio", y = "Frecuencia") +
-     theme_minimal() +
-     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-     facet_wrap(~url_type, scales = "free_y")
 
 #Pregunta 2.2   
    df3 <- df3 %>%
@@ -173,9 +167,7 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
      theme_minimal()
 
 #Pregunta 2.3
-      
-   install.packages("lessR")
-   library(lessR)
+
    
    pie_chart <- PieChart(
      responseCode,
