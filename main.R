@@ -6,14 +6,20 @@ install.packages("httr")
 install.packages("XML")
 install.packages("dplyr")
 install.packages("stringr")
+install.packages("writexl")
+
 
 library(XML)
 library(dplyr)
+library(writexl)
 
 
 #Pregunta 1.1 agregando
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
 web_page <-  httr::GET(url)
+xml_page <-  htmlParse(web_page, asText=TRUE)
+
+print(web_page)
 
 #Pregunta 1.2 
 xml_title <- xpathApply(xml_page,"//title")
@@ -21,7 +27,6 @@ xml_title
 
 
 #feature1.3
-xml_page <- htmlParse(web_page)
 print(xml_page)
 xml_page <- htmlParse(web_page, asText=TRUE)
 
@@ -78,16 +83,28 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
    
    ## aca tenemos que poner la condicional para saber comovamos tratar las url
    
-   if(url == "https://www.mediawiki.org/wiki/Template:Main_page/bs")
-     print("found")
+  # if(url == "https://www.mediawiki.org/wiki/Template:Main_page/bs")
+   #  print("found")
+   
+    if(stringr::str_starts(url,"//",negate = FALSE)){
+      print(url)
+    }
+   
+   if(stringr::str_starts(url,"https",negate = FALSE))
+     print(url)
+   
+   if(stringr::str_starts(url,"#",negate = FALSE))
+     print(url)
 
  }
+
+ var1 <- df2$HREF
  
 
+ 
+ 
 
 #Para exportar 
  
-install.packages("writexl")
-library(writexl)
-write_xlsx(df, "df_pregunta1_3..xlsx")
-write_xlsx(inner_merged, "df_pregunta1_3_inner..xlsx")
+#write_xlsx(df, "df_pregunta1_3..xlsx")
+#write_xlsx(inner_merged, "df_pregunta1_3_inner..xlsx")
