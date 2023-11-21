@@ -18,12 +18,12 @@ library(writexl)
 url <- "https://www.mediawiki.org/wiki/MediaWiki"
 web_page <-  httr::GET(url)
 xml_page <-  htmlParse(web_page, asText=TRUE)
-
 print(web_page)
 
 #Pregunta 1.2 
 xml_title <- xpathApply(xml_page,"//title")
 xml_title
+print(xml_title[1])
 
 
 #feature1.3
@@ -85,25 +85,27 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
    
   # if(url == "https://www.mediawiki.org/wiki/Template:Main_page/bs")
    #  print("found")
+   #if(stringr::str_starts(url,"^//",negate = FALSE))
+    # print(url)
    
-    if(stringr::str_starts(url,"//",negate = FALSE)){
-      print(url)
-    }
    
-   if(stringr::str_starts(url,"https",negate = FALSE))
-     print(url)
+    #if(stringr::str_starts(url,"^/\\w+",negate = FALSE))
+   #  print(url)
+    
+
+   #if(stringr::str_starts(url,"https",negate = FALSE))
+   # print(url)
    
-   if(stringr::str_starts(url,"#",negate = FALSE))
-     print(url)
+   if(stringr::str_starts(url,"http:",negate = FALSE))
+    print(url)
+   
+   #if(stringr::str_starts(url,"#",negate = FALSE))
+   #  print(url)
 
  }
 
  var1 <- df2$HREF
  
-
- 
- 
-
 #Para exportar 
  
 #write_xlsx(df, "df_pregunta1_3..xlsx")
