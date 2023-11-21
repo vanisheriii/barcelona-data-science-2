@@ -76,7 +76,12 @@ filter_duplicate  <- dplyr::filter(df,stringr::str_like(HREF,"/wiki/MediaWiki",i
    
    if(url == "https://www.mediawiki.org/wiki/Template:Main_page/bs")
      print("found")
-   
+   url <- case_when( 
+     stringr::str_starts(url,"\\") ~ "URL RELATIVA",
+     stringr::str_starts(url,"\/") ~ "URL RELATIVA",
+     
+    
+     )
    
  }
  
