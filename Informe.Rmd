@@ -1,0 +1,272 @@
+---
+title: "Trabajo 2 Grupo 4"
+output: html_document
+date: "2023-11-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r}
+library(XML)
+library(dplyr)
+library(writexl)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(scales)
+```
+
+# Practica calificada grupo 4
+
+# Pregunta 1
+
+## Pregunta 1.1
+
+Descargar la página web de la URL indicada, y almacenarlo en un formato de R apto para ser tratado.
+
+**Respuesta** Para poder conseguir los datos se debe usar las siguentes funciones
+
+------------------------------------------------------------------------
+
+``` r
+#Se importa las siguientes librerias
+install.packages("httr")
+install.packages("XML")
+install.packages("dplyr")
+install.packages("stringr")
+install.packages("writexl")
+install.packages("tidyverse")
+
+library(XML)
+library(dplyr)
+library(writexl)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(scales)
+
+
+url <- "https://www.mediawiki.org/wiki/MediaWiki"
+web_page <-  httr::GET(url)
+xml_page <-  htmlParse(web_page, asText = TRUE)
+```
+
+```{r}
+url <- "https://www.mediawiki.org/wiki/MediaWiki"
+web_page <-  httr::GET(url)
+xml_page <-  htmlParse(web_page, asText = TRUE)
+
+
+```
+
+Esto ejecutara una conversion al tipo de respuesta http a XML en la variable xml_page
+
+------------------------------------------------------------------------
+
+## Pregunta 1.2
+
+Analizar el contenido de la web, buscando el título de la página (que en HTML se etiqueta como "title")
+
+**Respuesta**
+
+``` r
+xml_title <- xpathApply(xml_page, "//title")
+xml_title
+print(xml_title[1])
+```
+
+```{r}
+xml_title <- xpathApply(xml_page, "//title")
+xml_title
+print(xml_title[1])
+```
+
+Como ya tenemos el formato en xml podemos filtrar usando Xpath para obtener los valores de los nodos de XML en este caso se busca el tag "title" y se muestra el resultado
+
+## Pregunta 1.3
+
+Analizar el contenido de la web, buscando todos los enlaces (que en HTML se etiquetan como "a"), buscando el texto del enlace, así como la URL
+
+**Respuesta**
+
+``` r
+df <- data.frame(
+  HREF = xpathSApply(xml_page, "//a", xmlGetAttr, "href"),
+  TEXTO = xpathSApply(xml_page, "//a", xmlValue)
+)
+```
+
+```{r}
+df <- data.frame(
+  HREF = xpathSApply(xml_page, "//a", xmlGetAttr, "href"),
+  TEXTO = xpathSApply(xml_page, "//a", xmlValue)
+)
+df
+```
+
+Se obtiene el dataframe con los datos deseados en la columnas "HREF" y "TEXTO" en estas columnas se obtendran los atributos href de los tags <a> y el valor de cada uno de estos
+
+## Pregunta 1.4
+
+Generar una tabla con cada enlace encontrado, indicando el texto que acompaña el enlace, y el número de veces que aparece un enlace con ese mismo objetivo
+
+**Respuesta**
+
+``` r
+df2 <-
+  df %>% group_by(HREF, TEXTO) %>% summarise(cantidad_peticiones  = n())
+view(df2)
+```
+
+```{r}
+enlaces <- xpathSApply(xml_page, "//a", xmlAttrs)
+
+
+df2 <-
+  df %>% group_by(HREF, TEXTO) %>% summarise(cantidad_peticiones  = n())
+df2
+```
+
+Esto lo que hara es agrupar la tabla en una nueva tabla usando el comando group_by HREF y TEXTO sumando en una nueva columna "cantidad_peticiones"
+
+## Pregunta 1.5
+
+Para cada enlace, seguirlo e indicar si está activo (podemos usar el código de status HTTP al hacer una petición a esa URL).
+
+``` r
+## NORMALIZANDO la informaciòn de HREF, convirtiendo una URL Relativa a absoluta (tipo2)
+df2 <- df2 %>%
+  mutate(
+    url_type = case_when(
+      stringr::str_starts(HREF, "^//", negate = FALSE) ~ "relativo",
+      stringr::str_starts(HREF, "^/\\w+", negate = FALSE) ~ "relativo",
+      grepl("^#", HREF) ~ "relativo",
+      TRUE ~ "absoluto"
+    ),
+    HREF = case_when(
+      stringr::str_starts(HREF, "^//", negate = FALSE) ~ paste0(url, gsub("//", "/", HREF)),
+      stringr::str_starts(HREF, "^/\\w+", negate = FALSE) ~ paste0(url, HREF),
+      grepl("^#", HREF) ~ paste0(url, HREF),
+      TRUE ~ HREF
+    )
+  )
+```
+
+Primero se normaliza la informacion agrupando por el tipo de URL siendo relativo y absoluto la nueva columna que se va a categorizar la data
+
+``` r
+df2$responseCode <- NA
+```
+
+Luego se crea una nueva columna con el responseCode a obtener, en este caso sera inicializado con NA
+
+``` r
+# Iterar sobre las filas de df2
+for (i in 1:nrow(df2)) {
+  row <- df2[i,]
+  url_local <- row$HREF
+  
+  # Realizar la solicitud HTTP y almacenar el código de respuesta
+  if (!is.na(url_local)) {
+    if (startsWith(url_local, "https")) {
+      response <- httr::GET(url_local)
+      df2[i, "responseCode"] <- response$status_code
+    } else {
+      # Si la URL no comienza con "http", agregar el prefijo de la URL principal
+      full_url <- paste0(url, url_local)
+      response <- httr::GET(full_url)
+      df2[i, "responseCode"] <- response$status_code
+    }
+  }
+  
+  # Pausa para evitar solicitudes demasiado frecuentes
+  Sys.sleep(0.2)
+}
+```
+
+```{r}
+df2
+```
+
+Luego con la nueva columna creada para obtener los codigos de respuesta se itera y se obtiene los valores, si el URL esta malformado o es local se completa para que se pueda enviar el comando. Se agrega un timeout para que la pagina web no nos banee por las peticiones que estamos realizando
+
+# Pregunta 2
+
+## Pregunta 2.1
+Un histograma con la frecuencia de aparición de los enlaces, pero separado por 
+URLs absolutas (con “http…”) y URLs relativas
+
+```{r}
+df3 <- df2 %>%
+     mutate(DOMINIO = gsub("^(https?://[^/]+).*", "\\1", HREF))
+   
+   df3 <- df3 %>% arrange(desc(cantidad_peticiones))
+  
+   ggplot(data = df3, aes(x = DOMINIO, fill = factor(url_type))) +
+     geom_bar(color = "black", position = "stack", alpha = 0.7) +
+     scale_fill_manual(values = c("yellow", "green")) +
+     geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, position = position_stack(vjust = 0.5)) +
+     labs(title = "Frecuencia de Dominios", x = "Dominio", y = "Frecuencia") +
+     theme_minimal() +
+     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotar etiquetas en el eje x
+     facet_wrap(~url_type, scales = "free_y")  # Facetas por url_type con escalas libres en el eje y
+   
+   
+   ggplot(data = df3, aes(x = reorder(DOMINIO, -..count..), fill = factor(url_type))) +
+     geom_bar(color = "black", position = "stack", alpha = 0.7) +
+     scale_fill_manual(values = c("yellow", "green")) +
+     geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, position = position_stack(vjust = 0.5)) +
+     labs(title = "Frecuencia de Dominios", x = "Dominio", y = "Frecuencia") +
+     theme_minimal() +
+     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+     facet_wrap(~url_type, scales = "free_y")
+```
+## Pregunta 2.2
+
+Un gráfico de barras indicando la suma de enlaces que apuntan a otros 
+dominios o servicios (distinto a https://www.mediawiki.org en el caso de 
+ejemplo) vs. la suma de los otros enlaces
+
+
+```{r}
+  df3 <- df3 %>%
+     mutate(enlace_interno = ifelse(grepl("^https://www.mediawiki.org", DOMINIO), "Interno", "Externo"))
+  
+   ggplot(data = df3, aes(x = enlace_interno, fill = factor(url_type))) +
+     geom_bar(color = "black", position = "stack", alpha = 0.7) +
+     scale_fill_manual(values = c("yellow", "green")) +
+     geom_text(stat = "count", aes(label = ..count..), vjust = -0.5, position = position_stack(vjust = 0.5)) +
+     labs(title = "Suma de enlaces internos y externos", x = "Tipo de enlace", y = "Frecuencia") +
+     theme_minimal() +
+     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+     facet_wrap(~url_type, scales = "free_y")
+   
+   
+   # Crear el gráfico de torta
+   ggplot(df3, aes(x = factor(responseCode))) +
+     geom_bar(stat = "count", fill = "blue", color = "green") +
+     pie("y") +  # Convertir el gráfico en un gráfico de torta
+     labs(title = "Distribución de responseCode", x = "Response Code") +
+     theme_minimal()
+```
+#Pregunta 2.3
+Un gráfico de tarta (pie chart) indicando los porcentajes de Status de nuestro 
+análisis
+
+```{r}
+pie_chart <- PieChart(
+     responseCode,
+     hole = 0,
+     values = "%",
+     data = df3,
+     fill = c("blue", "red"),
+     main = "Porcentajes de Status Code",
+     percent_label_color = "black", 
+     show_legend = FALSE  
+   )
+   
+   legend("topleft", legend = c("200", "404"),
+          fill =  c("blue", "red"))
+```
